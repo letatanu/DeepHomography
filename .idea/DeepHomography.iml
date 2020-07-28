@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="PYTHON_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/.vscode" />
+      <excludeFolder url="file://$MODULE_DIR$/Coco" />
+      <excludeFolder url="file://$MODULE_DIR$/HomoDB" />
+      <excludeFolder url="file://$MODULE_DIR$/Kitti_Dataset" />
+      <excludeFolder url="file://$MODULE_DIR$/SIFT_VAL" />
+      <excludeFolder url="file://$MODULE_DIR$/SIFT_Visual" />
+      <excludeFolder url="file://$MODULE_DIR$/analysis" />
+      <excludeFolder url="file://$MODULE_DIR$/createdDataset" />
+      <excludeFolder url="file://$MODULE_DIR$/tesData" />
+      <excludeFolder url="file://$MODULE_DIR$/testDB" />
+      <excludePattern pattern="SIFT_TRAIN" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
