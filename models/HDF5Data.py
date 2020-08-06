@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 from pathlib import Path
 import h5py
+
 class HDF5DataLoader(Dataset):
     """Represents an abstract HDF5 dataset.
 
@@ -59,16 +60,16 @@ class HDF5DataLoader(Dataset):
 
         croppedImg, croppedAppliedImage, H, H_AB = self.randomCreatePatch(img, pos)
         H, H_AB = np.array(H).flatten(), np.array(H_AB).flatten()
-        if height != 128:
+        if self.patchSize != 128:
             croppedImg = cv2.resize(croppedImg, (128, 128), interpolation=cv2.INTER_AREA)
             croppedAppliedImage = cv2.resize(croppedAppliedImage, (128, 128), interpolation=cv2.INTER_AREA)
 
         croppedImg = (croppedImg - 127.5) / 127.5
-        croppedAppliedImage = (croppedAppliedImage - 127.5) / 127.5
+        croppedAppliedImage = (croppedAppliedImage -127.5)/127.5
 
         input = self.stack2Arrays(croppedImg, croppedAppliedImage)
         input = np.rollaxis(input, 2, 0)
-        return input, H, H_AB, pos
+        return input, H/self.pValue, H_AB, pos
 
     def get_data(self, index):
         patchID = index // self.size

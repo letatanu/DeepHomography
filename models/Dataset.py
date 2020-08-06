@@ -6,9 +6,11 @@ import shutil
 import h5py
 from pathlib import Path
 class DataSet():
-    def __init__(self, path, ROOT_DIR = os.path.dirname(os.path.abspath(__file__))):
+    def __init__(self, path, ROOT_DIR = os.path.dirname(os.path.abspath(__file__)), patchSize=128, pValue = 32):
         self.path = path
         self.rootDir = ROOT_DIR
+        self.patchSize =  patchSize
+        self.pValue = pValue
 
     # ------------------------ Co Co ------------------------
 
@@ -40,6 +42,91 @@ class DataSet():
                 print("Processing file ... {}".format(id))
                 images = []
 
+    def createDeepHomo_CoCoHDF5(self, numImages, datasetTyp="Train"):
+        hdf5Dir = os.path.join(self.path, "hdf5_DeepHomo{}".format(datasetTyp))
+        if os.path.isdir(hdf5Dir):
+            shutil.rmtree(hdf5Dir)
+            os.mkdir(hdf5Dir)
+        else:
+            os.mkdir(hdf5Dir)
+
+        trainPath = Path(os.path.join(self.path, "resized{}2017".format(datasetTyp)))
+        files = sorted(trainPath.glob('*.jpg'))
+        l = len(files)
+        images = []
+        poses = []
+        Hs = []
+        id = 0
+        print("Processing file ... {}".format(id))
+        for index, file in enumerate(files):
+            f = str(file.resolve())
+            img = np.array(cv2.imread(f, flags=cv2.IMREAD_GRAYSCALE), dtype=np.uint8)
+
+            height, width = img.shape
+            m = 5 if self.patchSize == 128 else 1
+            for j in range(m):
+                x = np.random.randint(low=self.pValue, high=width - self.pValue - self.patchSize)
+                y = np.random.randint(low=self.pValue, high=height - self.pValue - self.patchSize)
+                pos = np.array([x, y], dtype=np.int)
+
+                croppedImg, croppedAppliedImage, H, H_AB = self.randomCreatePatch(img, pos)
+                H, H_AB = np.array(H).flatten(), np.array(H_AB).flatten()
+                if self.patchSize != 128:
+                    croppedImg = cv2.resize(croppedImg, (128, 128), interpolation=cv2.INTER_AREA)
+                    croppedAppliedImage = cv2.resize(croppedAppliedImage, (128, 128), interpolation=cv2.INTER_AREA)
+
+                input = self.stack2Arrays(croppedImg, croppedAppliedImage)
+                input = np.rollaxis(input, 2, 0)
+                images.append(input)
+                poses.append(pos)
+                Hs.append(H)
+            if (index+1) % (numImages) == 0 or index == l-1:
+                self.createHDF5DeepHomo(images,poses, Hs , hdf5Dir, id)
+                id += 1
+                print("Processing file ... {}".format(id))
+                images = []
+
+    def stack2Arrays(self, array1, array2):
+        array1 = np.expand_dims(array1, axis=2)
+        array2 = np.expand_dims(array2, axis=2)
+        return np.concatenate((array1, array2), axis=2)
+
+    def randomCreatePatch(self, image, position):
+        croppedImage = image[position[1]: position[1] + self.patchSize, position[0]:position[0] + self.patchSize]
+        H = np.random.randint(-self.pValue, self.pValue, size=(4, 2))
+        src = np.array([
+            position
+            , [position[0] + self.patchSize, position[1]]
+            , [position[0] + self.patchSize, position[1] + self.patchSize]
+            , [position[0], position[1] + self.patchSize]
+        ], dtype=np.float32)
+
+        dest = np.array(src + H, dtype=np.float32)
+        H_AB = cv2.getPerspectiveTransform(src, dest)
+        H_BA = np.linalg.inv(H_AB)
+        appliedImg = cv2.warpPerspective(image, H_BA, dsize=(image.shape[1], image.shape[0]))
+        croppedAppliedImage = appliedImg[position[1]: position[1] + self.patchSize,
+                              position[0]:position[0] + self.patchSize]
+        return croppedImage, croppedAppliedImage, H, H_AB
+
+    def createHDF5DeepHomo(self, images, poses, Hs, path, id):
+        newPath = os.path.join(path, "{}_many.h5".format(id))
+
+        file = h5py.File(newPath, "w")
+
+        # Create a dataset in the file
+        dataset = file.create_dataset(
+            "images", np.shape(images), h5py.h5t.STD_U8BE, data=images
+        )
+        dataset = file.create_dataset(
+            "poses", np.shape(poses), h5py.h5t.STD_I8BE, data=poses
+        )
+        dataset = file.create_dataset(
+            "Hs", np.shape(Hs), h5py.h5t.STD_U8BE, data= Hs
+        )
+        file.close()
+        print("Storing file {}".format(id))
+
     def createHDF5(self, images, path, id):
         newPath = os.path.join(path, "{}_many.h5".format(id))
 
@@ -55,7 +142,7 @@ class DataSet():
     def readHDF5(self, id):
 
         file = h5py.File(self.path / f"{id}_many.h5", "r+")
-        images = np.array(file["/images"], dtype=np.float)
+        images = np.array(file["images"], dtype=np.float)
         return images
 
     # -------------------------------
@@ -163,91 +250,13 @@ class DataSet():
 
             metaData.extend(imgs_0Dirs)
             metaData.extend(imgs_1Dirs)
+
         with open(os.path.join(self.path,"metadata.txt"), 'wb') as f:
             pickle.dump(metaData, f)
         return metaData
 
-    # def createDataset(self):
-    #
-    #     def randomCreatePatch(image, position, pValue, patchSize=128):
-    #         croppedImage = image[position[0]: position[0] + patchSize, position[1]:position[1] + patchSize]
-    #         H = np.random.uniform(-pValue, pValue, size=(4, 2))
-    #
-    #         src = np.array([
-    #             position
-    #             , [position[0], position[1] + patchSize]
-    #             , [position[0] + patchSize, position[1] + patchSize]
-    #             , [position[0] + patchSize, position[1]]
-    #         ], dtype=np.float32)
-    #
-    #         dest = np.array(src + H, dtype=np.float32)
-    #         H_AB = cv2.getPerspectiveTransform(src, dest)
-    #         H_BA = np.linalg.inv(H_AB)
-    #         appliedImg = cv2.warpPerspective(image, H_BA, dsize=(image.shape[1], image.shape[0]))
-    #         croppedAppliedImage = appliedImg[position[0]: position[0] + patchSize, position[1]:position[1] + patchSize]
-    #         return croppedImage, croppedAppliedImage, H, H_AB
-    #
-    #     def createdPair(imageDir, writingDir, patchSize=128, pValue=10):
-    #         data = {}
-    #         imagesDir = os.listdir(imageDir)
-    #         imagesDir.sort()
-    #         for index, img in enumerate(imagesDir):
-    #             pairDir = os.path.join(writingDir, "{}".format(index).zfill(8))
-    #             if not os.path.isdir(pairDir):
-    #                 os.mkdir(pairDir)
-    #             imgDir = os.path.join(imageDir, img)
-    #             img = (np.array(cv2.imread(imgDir, flags=cv2.IMREAD_GRAYSCALE), dtype=np.float32))
-    #             print("Writting at folder ... {}".format(pairDir))
-    #             for i, pos in enumerate(positions):
-    #                 croppedImg, croppedAppliedImage, H, H_AB = randomCreatePatch(img, pos, pValue=pValue, patchSize=patchSize)
-    #                 croppedImgPath = os.path.join(pairDir, "cropped_{}.png".format(i))
-    #                 croppedAppliedImagePath = os.path.join(pairDir, "croppedApplied_{}.png".format(i))
-    #                 cv2.imwrite(croppedImgPath, croppedImg)
-    #                 cv2.imwrite(croppedAppliedImagePath, croppedAppliedImage)
-    #                 data[(croppedImgPath, croppedAppliedImagePath)] = [H, H_AB]
-    #                 with open(os.path.join(pairDir, "hab_{}".format(i)), "wb") as f:
-    #                     pickle.dump(H_AB, f)
-    #                 with open(os.path.join(pairDir, "h_{}".format(i)), "wb") as f:
-    #                     pickle.dump(H, f)
-    #         return data
-    #     datasetName = self.dsname
-    #     dsPath = os.path.join(self.rootDir, datasetName)
-    #     if not os.path.isdir(dsPath):
-    #         os.mkdir(dsPath)
-    #     else:
-    #         shutil.rmtree(dsPath)
-    #         os.mkdir(dsPath)
-    #
-    #     sequences = os.listdir(self.path)
-    #     metaData = {}
-    #     for sequence in sequences:
-    #         img_0Dir = os.path.join(self.path, sequence, "image_0")
-    #         img_1Dir = os.path.join(self.path, sequence, "image_1")
-    #
-    #         sqDsPath = os.path.join(dsPath, sequence)
-    #         if not os.path.isdir(sqDsPath):
-    #             os.mkdir(sqDsPath)
-    #         # --------------------------------------------
-    #         img_0 = os.path.join(sqDsPath, "image_0")
-    #         if not os.path.isdir(img_0):
-    #             os.mkdir(img_0)
-    #         d0 = createdPair(img_0Dir, img_0, patchSize=self.patchSize, pValue=self.pValue)
-    #         metaData = {**metaData, **d0}
-    #
-    #
-    #         # --------------------------------------------
-    #         img_1 = os.path.join(sqDsPath, "image_1")
-    #         if not os.path.isdir(img_1):
-    #             os.mkdir(img_1)
-    #         d1  = createdPair(img_1Dir, img_1, patchSize=self.patchSize, pValue=self.pValue)
-    #         metaData = {**metaData, **d1}
-    #
-    #     with open(os.path.join(dsPath, "metadata.txt"), 'wb') as f:
-    #         pickle.dump(metaData, f)
-
     def readDS(self):
         dsPath = os.path.join(self.rootDir, self.path)
-        ds = None
         with open(os.path.join(dsPath, "metadata.txt"), 'rb') as f:
             ds = pickle.load(f)
         return ds
@@ -260,8 +269,18 @@ class DataSet():
         return trainSet, valSet, testSet
 
 
+def main():
+    db = DataSet("/media/slark/M2_SSD/Coco")
+    db.resizeTrainCoCo()
+    db.resizeValCoCo()
+    db.resizeTestCoCo()
 
+    db.createCoCoHDF5(5000, "Val")
+    db.createCoCoHDF5(10000, "Train")
+    db.createCoCoHDF5(10000, "Test")
 
+if __name__ == '__main__':
+    main()
 
 
 
