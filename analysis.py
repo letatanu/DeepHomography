@@ -2,7 +2,7 @@ import numpy as np
 import pickle
 import cv2
 from shapely.geometry import Polygon
-text = "/media/slark/Data_New/DeepHomography/SIFT_VAL/SIFT_Sum.txt"
+text = "SIFT_Sum.txt"
 patchSize = 127
 with open(text, "rb") as f:
     data = pickle.load(f)
@@ -55,5 +55,4 @@ cv2.imwrite("croppedImg.png", croppedImg)
 cv2.imwrite("imag.png", image)
 cv2.imwrite("rAppliedImage.png", rAppliedImage)
 cv2.imwrite("result.png", rAppliedImage+croppedImg)
-
 

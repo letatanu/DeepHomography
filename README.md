@@ -7,5 +7,10 @@ a `4-point homography parameterization which maps the four corners from one imag
 
 I used MS-COCO dataset as it described in the paper. You can download it from [here](https://cocodataset.org/#download)
 There are 118287 images in the train set, and 40670 in the test set. 
-## Pre-processing
+## Getting the dataset
 
+
+## Pre-processing
+There are two ways to prepare the dataset. 
+1. Pre-processing 
+2. 
