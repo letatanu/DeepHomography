@@ -16,7 +16,7 @@ An example        |  Result | Patch | GroundTr | Predicted
 The pre-trained model is uploaded [here](https://drive.google.com/file/d/1ZnmlPu1NeXXMk6NHiP7fegzXM117eb15/view?usp=sharing).
 # Dataset 
 
-I used MS-COCO dataset as it described in the paper. You can download it from [here](https://cocodataset.org/#download).
+I used MS-COCO dataset as described in the paper. You can download it from [here](https://cocodataset.org/#download).
 There are 118287 images in the train set, and 40670 in the test set. 
 ## Pre-processing the dataset.
 Resize all images in the train and validation sets to the size of 320x240 and resize all images in the test to the size of 640x480.
