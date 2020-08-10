@@ -20,10 +20,10 @@ I used MS-COCO dataset as it described in the paper. You can download it from [h
 There are 118287 images in the train set, and 40670 in the test set. 
 ## Pre-processing the dataset.
 Resize all images in the train and validation sets to the size of 320x240 and resize all images in the test to the size of 640x480.
-Because I wanted to speed up the train progress, I then combine the resized images in train, validation and test sets to HDF5 files. For more detail, please take a look at the **Dataset** file. 
+Because I wanted to speed up the train progress, I then combined the resized images in train, validation and test sets into HDF5 files. For more detail, please take a look at the **Dataset.py** in the **models** directory. 
 
 # Training
-The model is trained over 49 epochs. 
+The model was trained over 49 epochs. 
 The initial learning rate is 0.005, and it is divided by 10 per 30000 iterations.
 ![traingImage](training.png)
 # Result
