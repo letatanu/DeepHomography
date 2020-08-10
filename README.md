@@ -3,7 +3,7 @@ This project is the unoffical implementation of the paper [Deep Image Homography
 A homography is a mapping from a projective space (image) P to Q. From this network, it will estimate 
 a `4-point homography parameterization which maps the four corners from one image into the second image`.
 
-An example        |  Result | Patch | ---GT---- | Predicted
+An example        |  Result | Patch | GroundTr | Predicted
 :-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
 ![](example_1/origin.png)   |   ![](example_1/result.png) |  ![](example_1/patch.png)| ![](example_1/gt.gif)| ![](example_1/predicted.gif)
 ![](example_2/origin.png)   |   ![](example_2/result.png) |  ![](example_2/patch.png)| ![](example_2/gt.gif)| ![](example_2/predicted.gif)
