@@ -110,9 +110,9 @@ def training(args, model, device, trainLoader, optimizer, criterion, epoch, writ
     writer.add_scalars('Train Epoch Loss', {'Training': np.mean(np.array(totalLoss))}, epoch)
     writer.flush()
 
-def meanCornerError(Hs, predicted_Hs, patchSize):
-    y_true = torch.reshape(Hs, (-1, 4, 2)) * patchSize
-    y_pred = torch.reshape(predicted_Hs, (-1, 4, 2)) * patchSize
+def meanCornerError(Hs, predicted_Hs, pValue):
+    y_true = torch.reshape(Hs, (-1, 4, 2)) * pValue
+    y_pred = torch.reshape(predicted_Hs, (-1, 4, 2)) * pValue
     loss = y_pred - y_true
     a = torch.norm(loss, dim=-1)
     res = torch.mean(a, dim=1)
@@ -134,19 +134,19 @@ def validate(model, device, valLoader, epoch, writer, trainloader=None):
     criterion = nn.MSELoss()
 
     with torch.no_grad():
-        for id, (data, target, _, corners) in enumerate(valLoader):
+        for data, target, _, _ in valLoader:
             data, target = data.to(device, dtype=torch.float), target.to(device, dtype=torch.float)
             output = model(data)
-            meanAvgCornerErr = meanCornerError(target, output, patchSize=32)
+            meanAvgCornerErr = meanCornerError(target, output, pValue=32)
             meanAvgCornerError_Val.append(meanAvgCornerErr.item())
             loss = criterion(output, target)
             testTotalLoss.append(loss.item())
 
         if trainloader:
-            for id, (data, target, _, corners) in enumerate(trainloader):
+            for data, target, _, _ in trainloader:
                 data, target = data.to(device, dtype=torch.float), target.to(device, dtype=torch.float)
                 output = model(data)
-                meanAvgCornerErr = meanCornerError(target, output, patchSize=32)
+                meanAvgCornerErr = meanCornerError(target, output, pValue=32)
                 meanAvgCornerError_Train.append(meanAvgCornerErr.item())
 
                 loss = criterion(output, target)
