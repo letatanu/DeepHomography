@@ -1,5 +1,5 @@
 # Deep Image Homography Estimation
-This project is the unoffical implementation of the paper [Deep Image Homography Estimation](https://arxiv.org/abs/1606.03798).
+This project is the unofficial implementation of the paper [Deep Image Homography Estimation](https://arxiv.org/abs/1606.03798).
 A homography is a mapping from a projective space (image) P to Q. From this network, it will estimate 
 a `4-point homography parameterization which maps the four corners from one image into the second image`.
 
