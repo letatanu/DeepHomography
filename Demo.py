@@ -202,7 +202,12 @@ def main():
 
     args = parser.parse_args()
     use_cuda = torch.cuda.is_available()
-    device = torch.device(args.deviceID if use_cuda else "cpu")
+    if use_cuda:
+        device = torch.device(args.deviceID)
+    else:  # attempt upgrade to Metal acceleration
+        use_mps = torch.backends.mps.is_built()
+        device = torch.device("mps" if use_mps else "cpu")
+
     resultModelFile = "pretrained_model"
 
 
@@ -213,9 +218,9 @@ def main():
         model.cuda()
     if os.path.isfile(resultModelFile):
         try:
-            model.load_state_dict(torch.load(resultModelFile))
-        except:
-            print("Cannot load the saved model")
+            model.load_state_dict(torch.load(resultModelFile, map_location=device))
+        except RuntimeError as e:
+            raise RuntimeError(f"Cannot load the saved model:\n{e}")
 
     demo(model, device, args.image)
 
